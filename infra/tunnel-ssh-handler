@@ -1,0 +1,21 @@
+#!/bin/bash
+# Tunnel SSH ForceCommand handler
+# This script runs instead of any shell command when the tunnel user connects
+
+INTERNAL_SECRET="${INTERNAL_SECRET:-your_internal_secret_here}"
+
+SSH_CLIENT_IP="${SSH_CLIENT%% *}"
+SLUG_FILE="/tmp/tunnel_${SSH_CLIENT_IP}.slug"
+
+for f in /tmp/tunnel_*.slug; do
+    if [ -f "$f" ]; then
+        SLUG=$(cat "$f" 2>/dev/null)
+        if [ -n "$SLUG" ]; then
+            curl -s -X POST "http://localhost:8000/internal/tunnel/$SLUG/activate" \
+                -H "X-Internal-Secret: $INTERNAL_SECRET" || true
+            rm -f "$f"
+        fi
+    fi
+done
+
+exec /bin/sleep infinity

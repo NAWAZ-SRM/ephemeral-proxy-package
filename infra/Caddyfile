@@ -1,0 +1,34 @@
+# Wildcard HTTPS for all tunnel subdomains (requires Caddy with Cloudflare DNS plugin)
+# For production with Cloudflare: set CLOUDFLARE_API_TOKEN env var
+# For local development: use Caddyfile.dev instead
+
+{$CADDY_HOST}:80, {$CADDY_HOST}:443 {
+    @dashboard host dash.{$CADDY_HOST}
+    handle @dashboard {
+        reverse_proxy localhost:5173
+    }
+
+    @api host api.{$CADDY_HOST}
+    handle @api {
+        reverse_proxy localhost:8000
+    }
+
+    handle {
+        reverse_proxy localhost:8000 {
+            header_up X-Tunnel-Host {host}
+            header_up X-Forwarded-For {remote_host}
+        }
+    }
+}
+
+{$CADDY_HOST} {
+    reverse_proxy localhost:5173
+}
+
+dash.{$CADDY_HOST} {
+    reverse_proxy localhost:5173
+}
+
+api.{$CADDY_HOST} {
+    reverse_proxy localhost:8000
+}

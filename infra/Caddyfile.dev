@@ -1,0 +1,17 @@
+# Local development Caddyfile - HTTP only
+:80 {
+    handle /api/* {
+        reverse_proxy api:8000
+    }
+
+    handle /tunnels/* {
+        reverse_proxy api:8000
+    }
+
+    handle {
+        reverse_proxy api:8000 {
+            header_up X-Tunnel-Host {host}
+            header_up X-Forwarded-For {remote_host}
+        }
+    }
+}

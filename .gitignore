@@ -1,0 +1,98 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.so
+.Python
+venv/
+.venv/
+env/
+ENV/
+.eggs/
+*.egg-info/
+*.egg
+
+# Docker
+.dockerignore
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*.sublime-workspace
+*.sublime-project
+*.iml
+
+# Build artifacts
+dist/
+build/
+server/app/__pycache__/
+cli/localdrop/__pycache__/
+server/alembic/__pycache__/
+client/node_modules/
+client/dist/
+client/.vite/
+client/.svelte-kit/
+client/package-lock.json
+
+# Logs
+*.log
+npm-debug.log*
+pip-log.txt
+pip-delete-this-directory.txt
+*.log
+
+# Secrets & credentials
+.env
+.env.*
+.env.local
+.env.development
+.env.production
+*.pem
+*.key
+*.crt
+*.csr
+credentials.json
+secrets.json
+*.secret
+id_rsa*
+*.id_rsa
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+dump.rdb
+
+# Coverage
+htmlcov/
+.coverage
+.pytest_cache/
+*.cover
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# Documentation
+*.md
+!README.md
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# Ansible
+ansible.cfg
+*.retry
+
+# Temp files
+*.tmp
+*.temp
+tmp/
+temp/

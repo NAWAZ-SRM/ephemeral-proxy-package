@@ -1,0 +1,14 @@
+# Tunnel service specific SSH configuration
+# Add this to /etc/ssh/sshd_config or as a separate file included via Include directive
+
+Match User tunnel
+    AllowTcpForwarding yes
+    X11Forwarding no
+    AllowAgentForwarding no
+    PermitTTY no
+    ForceCommand /usr/local/bin/tunnel-ssh-handler
+    AuthorizedKeysFile /etc/tunnel/authorized_keys/%u
+    PermitOpen any
+    GatewayPorts clientspecified
+    ClientAliveInterval 30
+    ClientAliveCountMax 3

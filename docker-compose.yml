@@ -1,0 +1,96 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-tunnel}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-tunneldb}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tunnel}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql+asyncpg://tunnel:tunnel_password@postgres/tunneldb
+      REDIS_URL: redis://:redis_password@redis:6379/0
+      SECRET_KEY: ${SECRET_KEY}
+      INTERNAL_SECRET: ${INTERNAL_SECRET}
+      JWT_ALGORITHM: ${JWT_ALGORITHM}
+      JWT_EXPIRE_HOURS: ${JWT_EXPIRE_HOURS}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GEOIP_DB_PATH: ${GEOIP_DB_PATH}
+      BASE_DOMAIN: ${BASE_DOMAIN}
+      PORT_POOL_MIN: ${PORT_POOL_MIN}
+      PORT_POOL_MAX: ${PORT_POOL_MAX}
+      DEFAULT_TTL_SECONDS: ${DEFAULT_TTL_SECONDS}
+      MAX_TTL_SECONDS: ${MAX_TTL_SECONDS}
+      MAX_TUNNELS_PER_USER: ${MAX_TUNNELS_PER_USER}
+      MAX_REQUESTS_PER_TUNNEL: ${MAX_REQUESTS_PER_TUNNEL}
+      RATE_LIMIT_PER_MINUTE: ${RATE_LIMIT_PER_MINUTE}
+      IDLE_WARN_MINUTES: ${IDLE_WARN_MINUTES}
+      IDLE_EXPIRE_MINUTES: ${IDLE_EXPIRE_MINUTES}
+      USE_HTTPS: "false"
+    ports:
+      - "8000:8000"
+    volumes:
+      - geoip_data:/app/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  dashboard:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    ports:
+      - "5173:80"
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infra/Caddyfile.dev:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  caddy_data:
+  caddy_config:
+  geoip_data:

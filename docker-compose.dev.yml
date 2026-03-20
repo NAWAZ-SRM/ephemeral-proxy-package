@@ -1,0 +1,50 @@
+version: "3.9"
+
+services:
+  api:
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    environment:
+      DATABASE_URL: postgresql+asyncpg://tunnel:tunnel_password@localhost:5432/tunneldb
+      REDIS_URL: redis://:tunnel_password@localhost:6379/0
+      SECRET_KEY: dev_secret_key_change_in_production_64_chars_long_xxxxxxxxxxxxx
+      INTERNAL_SECRET: dev_internal_secret_key_change_in_production
+      GOOGLE_CLIENT_ID: ""
+      GOOGLE_CLIENT_SECRET: ""
+      GEOIP_DB_PATH: /app/data/GeoLite2-Country.mmdb
+      BASE_DOMAIN: tunnel.dev
+      PORT_POOL_MIN: 20000
+      PORT_POOL_MAX: 29999
+      DEFAULT_TTL_SECONDS: 7200
+      MAX_TTL_SECONDS: 86400
+      MAX_TUNNELS_PER_USER: 3
+      MAX_REQUESTS_PER_TUNNEL: 10000
+      RATE_LIMIT_PER_MINUTE: 100
+      IDLE_WARN_MINUTES: 15
+      IDLE_EXPIRE_MINUTES: 30
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./server/app:/app/app
+      - geoip_data:/app/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  dashboard:
+    image: node:20-alpine
+    working_dir: /app
+    command: npm run dev
+    environment:
+      VITE_API_URL: http://localhost:8000
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    depends_on:
+      - api
+
+volumes:
+  geoip_data:
